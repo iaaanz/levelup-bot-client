@@ -1,0 +1,23 @@
+{
+  "name": "lol-bot-client-v1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "set NODE_ENV=development && electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "type": "module"
+  },
+  "author": "Iaaanz",
+  "license": "MIT",
+  "dependencies": {
+    "lcu-connector": "*",
+    "request": "*",
+    "jQuery": "*",
+    "axios": "*"
+  },
+  "devDependencies": {
+    "electron": "^13.0.0",
+    "electron-reload": "*"
+  }
+}
