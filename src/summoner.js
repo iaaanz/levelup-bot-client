@@ -69,7 +69,7 @@ class summoner {
 
 	receivedRankedStats(data) {
 		let rankedData = this.getHighestRank(data.rankedData);
-    
+
 		if (rankedData) { // Checking if summoner is unranked
 			this.division = this.returnRomanDivision(rankedData.division);
 			this.wins = rankedData.wins;

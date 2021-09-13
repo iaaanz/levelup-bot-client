@@ -5,8 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "set NODE_ENV=development && electron .",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "type": "module"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Iaaanz",
   "license": "MIT",
