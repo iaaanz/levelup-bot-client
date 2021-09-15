@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "set NODE_ENV=development && electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npx eslint --fix src"
   },
   "author": "Iaaanz",
   "license": "MIT",
@@ -16,7 +17,14 @@
     "axios": "*"
   },
   "devDependencies": {
+    "babel-eslint": "^10.1.0",
     "electron": "^13.0.0",
-    "electron-reload": "*"
+    "electron-reload": "*",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.4.0"
   }
 }
