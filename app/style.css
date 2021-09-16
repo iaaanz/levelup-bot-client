@@ -32,6 +32,10 @@ body {
     -webkit-app-region: drag;
 }
 
+.profile-layout {
+    margin-bottom: 70px;
+}
+
 .option-name {
     font-size: 25px;
     color: #f0e6d2;

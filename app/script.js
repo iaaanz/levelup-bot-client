@@ -1,49 +1,53 @@
+/* eslint-disable no-console */
 const { ipcRenderer } = require('electron');
 
 let gameVersion;
-let isActive;
-let level;
-let icon;
 let summoner;
 
-function exit_app() {
+const exitApp = () => {
   ipcRenderer.send('exit_app');
-}
+};
 
-function minimize_app() {
+const minimizeApp = () => {
   ipcRenderer.send('minimize_app');
-}
+};
 
-async function profileUpdate() {
-  try {
-    const data = ipcRenderer.sendSync('profileUpdate');
-    let { clientIcon } = data;
-    if (!data || !data.name) return;
-    if (clientIcon) {
-      if (clientIcon !== data.iconID) {
+const profileUpdate = () => {
+  ipcRenderer
+    .invoke('profileUpdate')
+    .then((res) => {
+      const data = res;
+      if (data === 'Updating') {
+        console.log('vaziu / updating');
+        document.getElementById('profileName').innerHTML = 'Updating...';
+        document.getElementById('profileRankedTier').innerHTML = 'Updating...';
+        return;
+      }
+
+      if (data === 'Offline') {
+        document.getElementById('profileSummonerIcon').src = 'assets/ui/default_icon.png';
+        document.getElementById('profileName').innerHTML = 'Is not logged in';
+        document.getElementById('profileRankedTier').innerHTML = 'Unranked';
+        document.getElementById('profileLevel').innerHTML = '--';
+      } else {
+        const { iconID, rankedData, level, name } = data;
+        const rankedTier = rankedData || document.getElementById('profileRankedTier').innerHTML;
+        const profileLevel = level || document.getElementById('profileWL').innerHTML;
+
+        document.getElementById('profileName').innerHTML = summoner || name;
+        document.getElementById('profileRankedTier').innerHTML = rankedTier;
+        document.getElementById('profileLevel').innerHTML = level || profileLevel;
         document.getElementById(
           'profileSummonerIcon'
-        ).src = `http://ddragon.leagueoflegends.com/cdn/${gameVersion}/img/profileicon/${data.iconID}.png`;
-        clientIcon = data.iconID;
+        ).src = `http://ddragon.leagueoflegends.com/cdn/${gameVersion}/img/profileicon/${
+          iconID || '1'
+        }.png`;
       }
-    } else {
-      const rankedData = data.rankedData || document.getElementById('profileRankedTier').innerHTML;
-      const profileLevel = data.level || document.getElementById('profileWL').innerHTML;
-      // document.getElementById("profileLeagueName").innerHTML =
-      // (leagueName != undefined) ? leagueName : "";
-      document.getElementById('profileName').innerHTML = summoner || data.name;
-      document.getElementById('profileRankedTier').innerHTML = rankedData;
-      document.getElementById('profileLevel').innerHTML = level || profileLevel;
-      document.getElementById(
-        'profileSummonerIcon'
-      ).src = `http://ddragon.leagueoflegends.com/cdn/${gameVersion}/img/profileicon/${
-        icon || data.iconID || '1'
-      }.png`;
-    }
-  } catch (e) {
-    console.erro(`And error occured updating the profile information: ${e}`);
-  }
-}
+    })
+    .catch((err) => {
+      console.log(`And error occured updating the profile information: ${err}`);
+    });
+};
 
 /*
     SECTIONS
@@ -88,27 +92,13 @@ function openTab(evt, tabName) {
   evt.currentTarget.className += ' active';
 }
 
-// TODO: Refatorar !!!
-function autoUpdate() {
-  isActive = true;
-  setTimeout(() => {
-    setInterval(() => {
-      if (!isActive) return;
-      profileUpdate();
-    }, 5000);
+const autoUpdate = () => {
+  setInterval(() => {
     profileUpdate();
-  }, 2000);
-}
-
-window.addEventListener('load', autoUpdate, false);
-
-window.onfocus = function () {
-  isActive = true;
+  }, 5000);
 };
 
-window.onblur = function () {
-  isActive = false;
-};
+autoUpdate();
 
 ipcRenderer.send('requestVersionCheck');
 setInterval(() => {

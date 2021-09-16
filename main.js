@@ -2,24 +2,18 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { app, BrowserWindow, ipcMain } = require('electron');
 const LCUConnector = require('lcu-connector');
+
+const connector = new LCUConnector();
 const axios = require('axios');
 const https = require('https');
 const request = require('request');
 const RoutesV2 = require('./src/routesv2');
 const SummonerV2 = require('./src/summonerv2');
-// const path = require('path');
-// const url = require('url');
-// const champions = require('./src/champions.json');
-// const APIClient = require('./src/routes');
-// const Summoner = require('./src/summoner');
-
-const connector = new LCUConnector();
 
 app.commandLine.appendSwitch('ignore-certificate-errors');
 
 let LocalSummoner;
 let RiotAPI;
-let clientFound;
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -61,6 +55,21 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
+ipcMain.on('exit_app', () => {
+  app.quit();
+});
+
+ipcMain.on('minimize_app', () => {
+  mainWindow.minimize();
+});
+
+ipcMain.on('requestVersionCheck', (event) => {
+  request('https://ddragon.leagueoflegends.com/api/versions.json', (error, response, body) => {
+    const data = JSON.parse(body);
+    event.sender.send('versions', data[0]);
+  });
+});
+
 const formattedData = (data) => {
   const riotToken = {
     riotToken: `Basic ${Buffer.from(`${data.username}:${data.password}`).toString('base64')}`,
@@ -85,50 +94,39 @@ const getLocalSummoner = async () => {
   await instance
     .get(RiotAPI.route('lolSummonerV1CurrentSummoner'))
     .then((res) => {
-      LocalSummoner = new SummonerV2(res.data, RiotAPI);
-      return LocalSummoner;
+      if (res.status === 200) {
+        LocalSummoner = new SummonerV2(res.data, RiotAPI);
+        return LocalSummoner;
+      }
+
+      return false;
     })
-    .catch((err) => {
-      console.log(err);
+    .catch(() => {
+      console.log('getLocalSummoner / .catch()');
     });
 };
+
+ipcMain.handle('profileUpdate', async () => {
+  if (!RiotAPI) return 'Offline';
+  getLocalSummoner();
+  if (!LocalSummoner) return 'Updating';
+  const result = await LocalSummoner.getProfileData();
+  return result;
+});
+
+connector.start();
 
 connector.on('connect', (data) => {
   const riotData = formattedData(data);
   RiotAPI = new RoutesV2(riotData.baseUrl, riotData.username, riotData.password);
-  getLocalSummoner();
   console.log('League Client has started:');
   console.log(riotData);
   console.log(`Request base URL: ${RiotAPI.getAPIBase()}`);
-  clientFound = true;
-});
-
-ipcMain.on('profileUpdate', async (event) => {
-  if (!RiotAPI) return;
   getLocalSummoner();
-  event.returnValue = LocalSummoner.getProfileData();
 });
 
-ipcMain.on('exit_app', () => {
-  app.quit();
+connector.on('disconnect', () => {
+  console.log('League Client closed');
+  RiotAPI = undefined;
+  LocalSummoner = undefined;
 });
-
-ipcMain.on('minimize_app', () => {
-  mainWindow.minimize();
-});
-
-ipcMain.on('requestVersionCheck', (event) => {
-  request('https://ddragon.leagueoflegends.com/api/versions.json', (error, response, body) => {
-    const data = JSON.parse(body);
-    event.sender.send('versions', data[0]);
-  });
-});
-
-// const searchClient = setInterval(() => {
-//   if (clientFound) {
-//     clearInterval(searchClient);
-//   }
-//   connector.start();
-// }, 5000);
-
-connector.start();
