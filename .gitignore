@@ -1,2 +1,7 @@
 node_modules
 credentials.ini
+botConfig.ini
+src/champions_test.js
+src/routes.js
+src/summoner.js
+app/index_teste.html
