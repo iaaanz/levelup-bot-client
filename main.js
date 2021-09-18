@@ -1,9 +1,11 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const LCUConnector = require('lcu-connector');
 const fs = require('fs');
+// const exec = require('child_process').execFile;
 
 const connector = new LCUConnector();
 const request = require('request');
@@ -11,22 +13,23 @@ const ini = require('ini');
 const path = require('path');
 const RoutesV2 = require('./src/routesv2');
 const SummonerV2 = require('./src/summonerv2');
-// const { getChampions } = require('./src/champions.');
 
 const credentialsPath = './credentials.ini';
+const botConfigPath = './botConfig.ini';
 
 app.commandLine.appendSwitch('ignore-certificate-errors');
 
 let LocalSummoner;
 let RiotAPI;
 let mainWindow;
+let selectedDir;
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
     frame: false,
     title: 'League LevelUp',
-    width: 1280,
-    height: 720,
+    width: 1024,
+    height: 576,
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -55,34 +58,6 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
-ipcMain.on('exitApp', () => {
-  app.quit();
-});
-
-ipcMain.on('minimizeApp', () => {
-  mainWindow.minimize();
-});
-
-ipcMain.on('requestVersionCheck', (event) => {
-  request('https://ddragon.leagueoflegends.com/api/versions.json', (error, response, body) => {
-    const data = JSON.parse(body);
-    event.sender.send('versions', data[0]);
-  });
-});
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const formattedData = (data) => {
-  const riotToken = {
-    riotToken: `Basic ${Buffer.from(`${data.username}:${data.password}`).toString('base64')}`,
-  };
-  const baseUrl = {
-    baseUrl: `${data.protocol}://${data.address}:${data.port}`,
-  };
-
-  return Object.assign(data, riotToken, baseUrl);
-};
-
 const getLocalSummoner = async () => {
   await RiotAPI.instance
     .get(RiotAPI.route('lolSummonerV1CurrentSummoner'))
@@ -99,13 +74,18 @@ const getLocalSummoner = async () => {
     });
 };
 
-ipcMain.handle('profileUpdate', async () => {
-  if (!RiotAPI) return 'Offline';
-  getLocalSummoner();
-  if (!LocalSummoner) return 'Updating';
-  const result = await LocalSummoner.getProfileData();
-  return result;
-});
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const formattedData = (data) => {
+  const riotToken = {
+    riotToken: `Basic ${Buffer.from(`${data.username}:${data.password}`).toString('base64')}`,
+  };
+  const baseUrl = {
+    baseUrl: `${data.protocol}://${data.address}:${data.port}`,
+  };
+
+  return Object.assign(data, riotToken, baseUrl);
+};
 
 const getSession = async () => {
   while (!fs.existsSync(credentialsPath)) {
@@ -115,15 +95,85 @@ const getSession = async () => {
   console.log('Arquivo com as informacoes da sessao encontrados com sucesso!');
 };
 
-// ipcMain.on('saveConfiguration', (botConfig) => {
-//   console.log(botConfig);
-// });
+const getGameDir = () => {
+  const gameDir = {
+    lolPath: selectedDir || '',
+  };
 
-ipcMain.on('select-dirs', async (event, arg) => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openDirectory'],
+  return gameDir;
+};
+
+ipcMain.on('exitApp', () => {
+  app.quit();
+});
+
+ipcMain.on('minimizeApp', () => {
+  mainWindow.minimize();
+});
+
+ipcMain.on('requestVersionCheck', (event) => {
+  request('https://ddragon.leagueoflegends.com/api/versions.json', (error, response, body) => {
+    const data = JSON.parse(body);
+    event.sender.send('versions', data[0]);
   });
-  console.log('directories selected', result.filePaths);
+});
+
+ipcMain.handle('profileUpdate', async () => {
+  if (!RiotAPI) return 'Offline';
+  getLocalSummoner();
+  if (!LocalSummoner) return 'Updating';
+  const result = await LocalSummoner.getProfileData();
+  return result;
+});
+
+ipcMain.on('saveConfiguration', (event, botConfig) => {
+  if (!getGameDir().lolPath) {
+    return dialog.showMessageBoxSync(mainWindow, {
+      message: 'Selecione o caminho do League of Legends',
+      type: 'warning',
+    });
+  }
+
+  Object.assign(botConfig, getGameDir());
+
+  if (!fs.existsSync(botConfigPath)) {
+    try {
+      fs.writeFileSync(botConfigPath, '');
+    } catch (error) {
+      console.log(`Erro ao criar botConfig.ini: ${error}\n`);
+    }
+  }
+
+  const iniText = ini.stringify(botConfig, { section: 'Config' });
+  return fs.writeFileSync(botConfigPath, iniText);
+});
+
+ipcMain.on('selectDir', (event) => {
+  selectedDir = dialog.showOpenDialogSync(mainWindow, {
+    title: 'Selecione a pasta do League of Legends (Ex: C:\\Riot Games\\League of Legends)',
+    properties: ['openDirectory'],
+    defaultPath: 'C:\\Riot Games',
+  });
+  console.log('Directory selected: ', selectedDir[0]);
+  selectedDir = selectedDir[0];
+  event.sender.send('selectedDir', selectedDir);
+});
+
+ipcMain.on('startBot', () => {
+  if (!selectedDir || !fs.existsSync(botConfigPath) || !fs.existsSync(credentialsPath)) {
+    console.log(`
+    selectedDir: ${selectedDir}
+    botConfigPath: ${!fs.existsSync(botConfigPath)}
+    credentialsPath: ${!fs.existsSync(credentialsPath)}
+    `);
+    return dialog.showMessageBoxSync(mainWindow, {
+      message: 'Required files not found.',
+      type: 'error',
+    });
+  }
+
+  // Executar aqui EXE
+  return true;
 });
 
 connector.start();
@@ -135,13 +185,13 @@ connector.on('connect', (data) => {
   console.log('League Client has started:');
   console.log(`Request base URL: ${RiotAPI.getAPIBase()}`);
 
-  fs.writeFile('credentials.ini', '', (err) => {
+  fs.writeFile(credentialsPath, '', (err) => {
     if (err) {
       return console.log(`Erro ao criar credentials.ini: ${err}\n`);
     }
 
     const iniText = ini.stringify(riotData, { section: 'riotData' });
-    fs.writeFileSync('./credentials.ini', iniText);
+    fs.writeFileSync(credentialsPath, iniText);
     console.log('Arquivo de conexao criado com sucesso!');
     return getSession();
   });

@@ -5,10 +5,12 @@ const championsJson = require('../src/champions.json');
 
 let gameVersion;
 
+// eslint-disable-next-line no-unused-vars
 const exitApp = () => {
   ipcRenderer.send('exitApp');
 };
 
+// eslint-disable-next-line no-unused-vars
 const minimizeApp = () => {
   ipcRenderer.send('minimizeApp');
 };
@@ -73,20 +75,27 @@ const autoUpdate = () => {
 // eslint-disable-next-line no-unused-vars
 const saveConfiguration = () => {
   const botConfig = {
-    lol_path: '',
-    gamemode: '',
-    champ1: '',
-    champ2: '',
-    champ3: '',
-    // user: '',
-    // senha: '',
+    gamemode: $('#gamemode option:selected').text(),
+    champ1: $('#champ1 option:selected').text(),
+    champ2: $('#champ2 option:selected').text(),
+    champ3: $('#champ3 option:selected').text(),
   };
+
   ipcRenderer.send('saveConfiguration', botConfig);
 };
 
 // eslint-disable-next-line no-unused-vars
+const startBot = () => {
+  ipcRenderer.send('startBot');
+};
+
+ipcRenderer.on('selectedDir', (event, selectedDir) => {
+  $('#gamefolder').text(selectedDir);
+});
+
+// eslint-disable-next-line no-unused-vars
 const selectDir = () => {
-  ipcRenderer.send('select-dirs');
+  ipcRenderer.send('selectDir');
 };
 
 ipcRenderer.send('requestVersionCheck');

@@ -30,6 +30,15 @@ select {
     -moz-text-align-last: center;
 }
 
+textarea#gamefolder {
+    font-size: 13px;
+}
+
+textarea#gamefolder:disabled {
+    color: rgb(62.7%, 60.8%, 54.9%) !important;
+    border: 1px solid #785A28;
+}
+
 .titleBar {
     margin-left: 10px;
     width: 100%;

@@ -4,19 +4,19 @@ function openTab(evt, tabName) {
   let tabcontent;
   let tablinks;
 
-  if (tabName == 'Home') {
+  if (tabName === 'Home') {
     document.getElementById('selected').style.marginLeft = '0px';
   }
 
-  if (tabName == 'Profile') {
+  if (tabName === 'Profile') {
     document.getElementById('selected').style.marginLeft = '120px';
   }
 
-  if (tabName == 'Champ Select') {
+  if (tabName === 'Configurations') {
     document.getElementById('selected').style.marginLeft = '278px';
   }
 
-  if (tabName == 'Miscellaneous') {
+  if (tabName === 'Miscellaneous') {
     document.getElementById('selected').style.marginLeft = '473px';
   }
 
