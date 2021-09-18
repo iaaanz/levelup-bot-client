@@ -11,14 +11,15 @@
   "author": "Iaaanz",
   "license": "MIT",
   "dependencies": {
+    "axios": "*",
+    "ini": "^2.0.0",
+    "jQuery": "*",
     "lcu-connector": "*",
     "request": "*",
-    "jQuery": "*",
-    "axios": "*"
+    "electron": "^13.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "electron": "^13.0.0",
     "electron-reload": "*",
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",

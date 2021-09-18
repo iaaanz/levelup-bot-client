@@ -1,5 +1,8 @@
 class RoutesV2 {
   constructor(base, username, password) {
+    this.https = require('https');
+    this.axios = require('axios');
+
     if (!base) throw new Error('Invalid base URL..');
     if (!username) throw new Error('Invalid username..');
     if (!password) throw new Error('Invalid password..');
@@ -15,6 +18,15 @@ class RoutesV2 {
       lolSummonerV1CurrentSummoner: '/lol-summoner/v1/current-summoner',
       lolRankedStatsV1StatsByID: '/lol-ranked/v1/current-ranked-stats',
     };
+
+    this.instance = this.axios.create({
+      httpsAgent: new this.https.Agent({
+        rejectUnauthorized: false,
+      }),
+      headers: {
+        Authorization: this.getAuth(),
+      },
+    });
   }
 
   setAPIBase(base) {
@@ -31,7 +43,7 @@ class RoutesV2 {
 
   route(routeName, id) {
     const route = id ? this.routes[routeName](this, id) : this.routes[routeName];
-    if (!route) throw new Error('Invalid alias.');
+    if (!route) throw new Error('Invalid route name.');
     return this.base + route;
   }
 }

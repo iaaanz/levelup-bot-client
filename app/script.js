@@ -1,15 +1,35 @@
 /* eslint-disable no-console */
 const { ipcRenderer } = require('electron');
+const $ = require('jQuery');
+const championsJson = require('../src/champions.json');
 
+const champCombo1 = document.getElementById('champ1');
+const champCombo2 = document.getElementById('champ2');
+const champCombo3 = document.getElementById('champ3');
 let gameVersion;
 let summoner;
 
 const exitApp = () => {
-  ipcRenderer.send('exit_app');
+  ipcRenderer.send('exitApp');
 };
 
 const minimizeApp = () => {
-  ipcRenderer.send('minimize_app');
+  ipcRenderer.send('minimizeApp');
+};
+
+const setChampion = () => {
+  let opt;
+  const { champions } = championsJson;
+  const champName = Object.getOwnPropertyNames(champions);
+  const champCount = Object.keys(champions).length;
+  for (let i = 0; i < champCount; i += 1) {
+    opt = document.createElement('option');
+    opt.value = champions[champName[i]];
+    opt.innerHTML = champName[i];
+    champCombo1.appendChild(opt.cloneNode(true));
+    champCombo2.appendChild(opt.cloneNode(true));
+    champCombo3.appendChild(opt.cloneNode(true));
+  }
 };
 
 const profileUpdate = () => {
@@ -49,66 +69,40 @@ const profileUpdate = () => {
     });
 };
 
-/*
-    SECTIONS
-*/
-
-function openTab(evt, tabName) {
-  // Declare all variables
-  let i;
-  let tabcontent;
-  let tablinks;
-
-  if (tabName == 'Home') {
-    document.getElementById('selected').style.marginLeft = '0px';
-  }
-
-  if (tabName == 'Profile') {
-    document.getElementById('selected').style.marginLeft = '120px';
-  }
-
-  if (tabName == 'Champ Select') {
-    document.getElementById('selected').style.marginLeft = '278px';
-  }
-
-  if (tabName == 'Miscellaneous') {
-    document.getElementById('selected').style.marginLeft = '473px';
-  }
-
-  // Get all elements with class="tabcontent" and hide them
-  tabcontent = document.getElementsByClassName('tabcontent');
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = 'none';
-  }
-
-  // Get all elements with class="tablinks" and remove the class "active"
-  tablinks = document.getElementsByClassName('tablinks');
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(' active', '');
-  }
-
-  // Show the current tab, and add an "active" class to the button that opened the tab
-  document.getElementById(tabName).style.display = 'block';
-  evt.currentTarget.className += ' active';
-}
-
 const autoUpdate = () => {
   setInterval(() => {
     profileUpdate();
   }, 5000);
 };
 
-autoUpdate();
+// eslint-disable-next-line no-unused-vars
+const saveConfiguration = () => {
+  const botConfig = {
+    lol_path: '',
+    gamemode: '',
+    champ1: '',
+    champ2: '',
+    champ3: '',
+    // user: '',
+    // senha: '',
+  };
+  ipcRenderer.send('saveConfiguration', botConfig);
+};
+
+// eslint-disable-next-line no-unused-vars
+const selectDir = () => {
+  ipcRenderer.send('select-dirs');
+};
 
 ipcRenderer.send('requestVersionCheck');
+
 setInterval(() => {
   ipcRenderer.send('requestVersionCheck');
 }, 30000);
 
-function openGithub() {
-  ipcRenderer.send('openGitRepository');
-}
-
 ipcRenderer.on('versions', (event, leagueGameVersion) => {
   gameVersion = leagueGameVersion;
 });
+
+autoUpdate();
+setChampion();

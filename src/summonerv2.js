@@ -1,8 +1,5 @@
 class SummonerV2 {
   constructor(data, RiotAPI) {
-    this.https = require('https');
-    this.axios = require('axios');
-
     this.RiotAPI = RiotAPI;
     this.level = this.level || data.summonerLevel;
     this.name = this.name || data.displayName;
@@ -36,15 +33,8 @@ class SummonerV2 {
 
   getRankedStats = async () => {
     const rankedUrl = this.RiotAPI.route('lolRankedStatsV1StatsByID');
-    const instance = this.axios.create({
-      httpsAgent: new this.https.Agent({
-        rejectUnauthorized: false,
-      }),
-      headers: {
-        Authorization: this.RiotAPI.getAuth(),
-      },
-    });
-    await instance
+
+    await this.RiotAPI.instance
       .get(rankedUrl)
       .then((res) => {
         const data = res.data.queueMap.RANKED_SOLO_5x5;
