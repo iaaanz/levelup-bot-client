@@ -3,11 +3,7 @@ const { ipcRenderer } = require('electron');
 const $ = require('jQuery');
 const championsJson = require('../src/champions.json');
 
-const champCombo1 = document.getElementById('champ1');
-const champCombo2 = document.getElementById('champ2');
-const champCombo3 = document.getElementById('champ3');
 let gameVersion;
-let summoner;
 
 const exitApp = () => {
   ipcRenderer.send('exitApp');
@@ -26,9 +22,9 @@ const setChampion = () => {
     opt = document.createElement('option');
     opt.value = champions[champName[i]];
     opt.innerHTML = champName[i];
-    champCombo1.appendChild(opt.cloneNode(true));
-    champCombo2.appendChild(opt.cloneNode(true));
-    champCombo3.appendChild(opt.cloneNode(true));
+    $('#champ1').append(opt.cloneNode(true));
+    $('#champ2').append(opt.cloneNode(true));
+    $('#champ3').append(opt.cloneNode(true));
   }
 };
 
@@ -38,30 +34,29 @@ const profileUpdate = () => {
     .then((res) => {
       const data = res;
       if (data === 'Updating') {
-        console.log('vaziu / updating');
-        document.getElementById('profileName').innerHTML = 'Updating...';
-        document.getElementById('profileRankedTier').innerHTML = 'Updating...';
+        $('#profileName').text('Updating...');
+        $('#profileRankedTier').text('Updating...');
         return;
       }
 
       if (data === 'Offline') {
-        document.getElementById('profileSummonerIcon').src = 'assets/ui/default_icon.png';
-        document.getElementById('profileName').innerHTML = 'Is not logged in';
-        document.getElementById('profileRankedTier').innerHTML = 'Unranked';
-        document.getElementById('profileLevel').innerHTML = '--';
+        $('#profileSummonerIcon').attr('src', 'assets/ui/default_icon.png');
+        $('#profileName').text('Is not logged in');
+        $('#profileRankedTier').text('Unranked');
+        $('#profileLevel').text('--');
       } else {
         const { iconID, rankedData, level, name } = data;
-        const rankedTier = rankedData || document.getElementById('profileRankedTier').innerHTML;
-        const profileLevel = level || document.getElementById('profileWL').innerHTML;
+        const rankedTier = rankedData || $('#profileRankedTier').text();
 
-        document.getElementById('profileName').innerHTML = summoner || name;
-        document.getElementById('profileRankedTier').innerHTML = rankedTier;
-        document.getElementById('profileLevel').innerHTML = level || profileLevel;
-        document.getElementById(
-          'profileSummonerIcon'
-        ).src = `http://ddragon.leagueoflegends.com/cdn/${gameVersion}/img/profileicon/${
-          iconID || '1'
-        }.png`;
+        $('#profileName').text(name);
+        $('#profileRankedTier').text(rankedTier);
+        $('#profileLevel').text(level);
+        $('#profileSummonerIcon').attr(
+          'src',
+          `http://ddragon.leagueoflegends.com/cdn/${gameVersion}/img/profileicon/${
+            iconID || '1'
+          }.png`
+        );
       }
     })
     .catch((err) => {
