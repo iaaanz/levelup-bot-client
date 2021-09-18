@@ -5,17 +5,18 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const LCUConnector = require('lcu-connector');
 const fs = require('fs');
+const fse = require('fs-extra');
 // const exec = require('child_process').execFile;
 
 const connector = new LCUConnector();
 const request = require('request');
 const ini = require('ini');
-const path = require('path');
 const RoutesV2 = require('./src/routesv2');
 const SummonerV2 = require('./src/summonerv2');
 
 const credentialsPath = './credentials.ini';
 const botConfigPath = './botConfig.ini';
+const botLolConfig = './core/ConfigV2';
 
 app.commandLine.appendSwitch('ignore-certificate-errors');
 
@@ -32,7 +33,7 @@ const createWindow = () => {
     height: 576,
     resizable: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      // preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: true,
@@ -144,6 +145,12 @@ ipcMain.on('saveConfiguration', (event, botConfig) => {
     }
   }
 
+  fse.copySync(botLolConfig, selectedDir, { overwrite: true }, (err) => {
+    if (err) {
+      console.error(err);
+    }
+  });
+
   const iniText = ini.stringify(botConfig, { section: 'Config' });
   return fs.writeFileSync(botConfigPath, iniText);
 });
@@ -160,14 +167,17 @@ ipcMain.on('selectDir', (event) => {
 });
 
 ipcMain.on('startBot', () => {
-  if (!selectedDir || !fs.existsSync(botConfigPath) || !fs.existsSync(credentialsPath)) {
-    console.log(`
-    selectedDir: ${selectedDir}
-    botConfigPath: ${!fs.existsSync(botConfigPath)}
-    credentialsPath: ${!fs.existsSync(credentialsPath)}
-    `);
+  if (!getGameDir().lolPath || !fs.existsSync(botConfigPath) || !fs.existsSync(credentialsPath)) {
+    // console.log(`
+    // selectedDir: ${selectedDir}
+    // botConfigPath: ${fs.existsSync(botConfigPath)}
+    // credentialsPath: ${fs.existsSync(credentialsPath)}
+    // `);
     return dialog.showMessageBoxSync(mainWindow, {
-      message: 'Required files not found.',
+      message: `Required files/paths not found:
+      lolPath: ${getGameDir().lolPath ? 'Found' : 'Not Found'}
+      botConfigPath: ${fs.existsSync(botConfigPath) ? 'Found' : 'Not Found'}
+      credentialsPath: ${fs.existsSync(credentialsPath) ? 'Found' : 'Not Found'}`,
       type: 'error',
     });
   }

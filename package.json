@@ -12,11 +12,12 @@
   "license": "MIT",
   "dependencies": {
     "axios": "*",
+    "electron": "^13.0.0",
+    "fs-extra": "^10.0.0",
     "ini": "^2.0.0",
     "jQuery": "*",
     "lcu-connector": "*",
-    "request": "*",
-    "electron": "^13.0.0"
+    "request": "*"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
