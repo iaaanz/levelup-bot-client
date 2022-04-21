@@ -1,8 +1,6 @@
+// eslint-disable-next-line no-unused-vars
 function openTab(evt, tabName) {
-  // Declare all variables
-  let i;
-  let tabcontent;
-  let tablinks;
+  const event = evt;
 
   if (tabName === 'Home') {
     document.getElementById('selected').style.marginLeft = '0px';
@@ -21,18 +19,24 @@ function openTab(evt, tabName) {
   }
 
   // Get all elements with class="tabcontent" and hide them
-  tabcontent = document.getElementsByClassName('tabcontent');
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = 'none';
-  }
+  const tabContent = document.getElementsByClassName('tabcontent');
+  const tabContentArr = Object.getOwnPropertyNames(tabContent);
+  tabContentArr.forEach((_, i) => {
+    if (!tabContent[i]) return;
+
+    tabContent[i].style.display = 'none';
+  });
 
   // Get all elements with class="tablinks" and remove the class "active"
-  tablinks = document.getElementsByClassName('tablinks');
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(' active', '');
-  }
+  const tabLinks = document.getElementsByClassName('tablinks');
+  const tabLinkArr = Object.getOwnPropertyNames(tabLinks);
+  tabLinkArr.forEach((_, i) => {
+    if (!tabLinks[i]) return;
+
+    tabLinks[i].className = tabLinks[i].className.replace(' active', '');
+  });
 
   // Show the current tab, and add an "active" class to the button that opened the tab
   document.getElementById(tabName).style.display = 'block';
-  evt.currentTarget.className += ' active';
+  event.currentTarget.className += ' active';
 }

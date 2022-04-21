@@ -16,8 +16,7 @@
     "fs-extra": "^10.0.0",
     "ini": "^2.0.0",
     "jQuery": "*",
-    "lcu-connector": "*",
-    "request": "*"
+    "lcu-connector": "*"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",

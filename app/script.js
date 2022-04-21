@@ -16,18 +16,17 @@ const minimizeApp = () => {
 };
 
 const setChampion = () => {
-  let opt;
   const { champions } = championsJson;
   const champName = Object.getOwnPropertyNames(champions);
-  const champCount = Object.keys(champions).length;
-  for (let i = 0; i < champCount; i += 1) {
-    opt = document.createElement('option');
+
+  Object.keys(champions).forEach((_, i) => {
+    const opt = document.createElement('option');
     opt.value = champions[champName[i]];
     opt.innerHTML = champName[i];
     $('#champ1').append(opt.cloneNode(true));
     $('#champ2').append(opt.cloneNode(true));
     $('#champ3').append(opt.cloneNode(true));
-  }
+  });
 };
 
 const profileUpdate = () => {
@@ -66,22 +65,16 @@ const profileUpdate = () => {
     });
 };
 
-const autoUpdate = () => {
-  setInterval(() => {
-    profileUpdate();
-  }, 5000);
-};
-
 // eslint-disable-next-line no-unused-vars
 const saveConfiguration = () => {
-  const botConfig = {
+  const basicBotConfiguration = {
     gamemode: $('#gamemode option:selected').text(),
     champ1: $('#champ1 option:selected').text(),
     champ2: $('#champ2 option:selected').text(),
     champ3: $('#champ3 option:selected').text(),
   };
 
-  ipcRenderer.send('saveConfiguration', botConfig);
+  ipcRenderer.send('saveConfiguration', basicBotConfiguration);
 };
 
 // eslint-disable-next-line no-unused-vars
@@ -90,7 +83,7 @@ const startBot = () => {
 };
 
 ipcRenderer.on('selectedDir', (event, selectedDir) => {
-  $('#gamefolder').text(selectedDir);
+  $('#gamefolder').text(selectedDir ?? '');
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -98,15 +91,16 @@ const selectDir = () => {
   ipcRenderer.send('selectDir');
 };
 
-ipcRenderer.send('requestVersionCheck');
+ipcRenderer.on('versions', (event, leagueGameVersion) => {
+  gameVersion = leagueGameVersion;
+});
 
 setInterval(() => {
   ipcRenderer.send('requestVersionCheck');
 }, 30000);
 
-ipcRenderer.on('versions', (event, leagueGameVersion) => {
-  gameVersion = leagueGameVersion;
-});
+setInterval(() => {
+  profileUpdate();
+}, 5000);
 
-autoUpdate();
 setChampion();

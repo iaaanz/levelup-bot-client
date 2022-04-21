@@ -6,21 +6,18 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const LCUConnector = require('lcu-connector');
 const fs = require('fs');
 const fse = require('fs-extra');
-// const exec = require('child_process').execFile;
-
-const connector = new LCUConnector();
-const request = require('request');
+const axios = require('axios');
 const ini = require('ini');
 const RoutesV2 = require('./src/routesv2');
 const SummonerV2 = require('./src/summonerv2');
 
+const connector = new LCUConnector();
 const credentialsPath = './credentials.ini';
 const botConfigPath = './botConfig.ini';
 const botLolConfig = './core/ConfigV2';
 
 app.commandLine.appendSwitch('ignore-certificate-errors');
 
-let LocalSummoner;
 let RiotAPI;
 let mainWindow;
 let selectedDir;
@@ -33,7 +30,6 @@ const createWindow = () => {
     height: 576,
     resizable: false,
     webPreferences: {
-      // preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: true,
@@ -59,49 +55,28 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
-const getLocalSummoner = async () => {
-  await RiotAPI.instance
-    .get(RiotAPI.route('lolSummonerV1CurrentSummoner'))
-    .then((res) => {
-      if (res.status === 200) {
-        LocalSummoner = new SummonerV2(res.data, RiotAPI);
-        return LocalSummoner;
-      }
-
-      return false;
-    })
-    .catch(() => {
-      console.log('getLocalSummoner / .catch()');
-    });
-};
+const getGameDir = () => selectedDir ?? null;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const formattedData = (data) => {
-  const riotToken = {
-    riotToken: `Basic ${Buffer.from(`${data.username}:${data.password}`).toString('base64')}`,
-  };
-  const baseUrl = {
-    baseUrl: `${data.protocol}://${data.address}:${data.port}`,
-  };
+const getLocalSummoner = async () => {
+  const { data } = await RiotAPI.instance.get(RiotAPI.route('lolSummonerV1CurrentSummoner'));
+  const localSummoner = new SummonerV2(data, RiotAPI);
+  return localSummoner;
+};
 
-  return Object.assign(data, riotToken, baseUrl);
+const formattedData = (data) => {
+  const baseUrl = `${data.protocol}://${data.address}:${data.port}`;
+
+  return { ...data, baseUrl };
 };
 
 const getSession = async () => {
   while (!fs.existsSync(credentialsPath)) {
     await sleep(1000);
-    console.log('Arquivo com as informacoes da sessao nao encontrados');
+    console.log('File with session information not found');
   }
-  console.log('Arquivo com as informacoes da sessao encontrados com sucesso!');
-};
-
-const getGameDir = () => {
-  const gameDir = {
-    lolPath: selectedDir || '',
-  };
-
-  return gameDir;
+  console.log('Session information file found successfully!');
 };
 
 ipcMain.on('exitApp', () => {
@@ -112,42 +87,43 @@ ipcMain.on('minimizeApp', () => {
   mainWindow.minimize();
 });
 
-ipcMain.on('requestVersionCheck', (event) => {
-  request('https://ddragon.leagueoflegends.com/api/versions.json', (error, response, body) => {
-    const data = JSON.parse(body);
-    event.sender.send('versions', data[0]);
-  });
+ipcMain.on('requestVersionCheck', async (event) => {
+  const { data } = await axios.get('https://ddragon.leagueoflegends.com/api/versions.json');
+  event.sender.send('versions', data[0]);
 });
 
 ipcMain.handle('profileUpdate', async () => {
   if (!RiotAPI) return 'Offline';
-  getLocalSummoner();
-  if (!LocalSummoner) return 'Updating';
-  const result = await LocalSummoner.getProfileData();
+  const localSummoner = await getLocalSummoner();
+  if (!localSummoner) return 'Updating';
+  const result = await localSummoner.getProfileData();
   return result;
 });
 
-ipcMain.on('saveConfiguration', (event, botConfig) => {
-  if (!getGameDir().lolPath) {
+ipcMain.on('saveConfiguration', (event, basicBotConfiguration) => {
+  if (!getGameDir()) {
     return dialog.showMessageBoxSync(mainWindow, {
-      message: 'Selecione o caminho do League of Legends',
+      message: 'Select the League of Legends path',
       type: 'warning',
     });
   }
 
-  Object.assign(botConfig, getGameDir());
+  const botConfig = {
+    ...basicBotConfiguration,
+    lolPath: getGameDir(),
+  };
 
   if (!fs.existsSync(botConfigPath)) {
     try {
       fs.writeFileSync(botConfigPath, '');
     } catch (error) {
-      console.log(`Erro ao criar botConfig.ini: ${error}\n`);
+      console.log(`Error to create botConfig.ini: ${error}\n`);
     }
   }
 
-  fse.copySync(botLolConfig, selectedDir, { overwrite: true }, (err) => {
+  fse.copySync(botLolConfig, getGameDir(), { overwrite: true }, (err) => {
     if (err) {
-      console.error(err);
+      console.log(err);
     }
   });
 
@@ -157,25 +133,21 @@ ipcMain.on('saveConfiguration', (event, botConfig) => {
 
 ipcMain.on('selectDir', (event) => {
   selectedDir = dialog.showOpenDialogSync(mainWindow, {
-    title: 'Selecione a pasta do League of Legends (Ex: C:\\Riot Games\\League of Legends)',
+    title: 'Select the League of Legends folder (E.g.: C:\\Riot Games\\League of Legends)',
     properties: ['openDirectory'],
     defaultPath: 'C:\\Riot Games',
   });
-  console.log('Directory selected: ', selectedDir[0]);
-  selectedDir = selectedDir[0];
+
+  selectedDir = selectedDir ? selectedDir[0] : null;
+  console.log('Directory selected: ', selectedDir);
   event.sender.send('selectedDir', selectedDir);
 });
 
 ipcMain.on('startBot', () => {
-  if (!getGameDir().lolPath || !fs.existsSync(botConfigPath) || !fs.existsSync(credentialsPath)) {
-    // console.log(`
-    // selectedDir: ${selectedDir}
-    // botConfigPath: ${fs.existsSync(botConfigPath)}
-    // credentialsPath: ${fs.existsSync(credentialsPath)}
-    // `);
+  if (!getGameDir() || !fs.existsSync(botConfigPath) || !fs.existsSync(credentialsPath)) {
     return dialog.showMessageBoxSync(mainWindow, {
       message: `Required files/paths not found:
-      lolPath: ${getGameDir().lolPath ? 'Found' : 'Not Found'}
+      lolPath: ${getGameDir() ? 'Found' : 'Not Found'}
       botConfigPath: ${fs.existsSync(botConfigPath) ? 'Found' : 'Not Found'}
       credentialsPath: ${fs.existsSync(credentialsPath) ? 'Found' : 'Not Found'}`,
       type: 'error',
@@ -188,27 +160,26 @@ ipcMain.on('startBot', () => {
 
 connector.start();
 
-connector.on('connect', (data) => {
+connector.on('connect', async (data) => {
   const riotData = formattedData(data);
   RiotAPI = new RoutesV2(riotData.baseUrl, riotData.username, riotData.password);
-  getLocalSummoner();
+
   console.log('League Client has started:');
-  console.log(`Request base URL: ${RiotAPI.getAPIBase()}`);
+  console.log(`API Base Url: ${RiotAPI.getAPIBase()}`);
 
   fs.writeFile(credentialsPath, '', (err) => {
     if (err) {
-      return console.log(`Erro ao criar credentials.ini: ${err}\n`);
+      return console.log(`Error to create credentials.ini: ${err}\n`);
     }
 
     const iniText = ini.stringify(riotData, { section: 'riotData' });
     fs.writeFileSync(credentialsPath, iniText);
-    console.log('Arquivo de conexao criado com sucesso!');
+    console.log('Connection file created successfully!');
     return getSession();
   });
 });
 
 connector.on('disconnect', () => {
   console.log('League Client closed');
-  RiotAPI = undefined;
-  LocalSummoner = undefined;
+  RiotAPI = null;
 });

@@ -1,8 +1,8 @@
+const https = require('https');
+const axios = require('axios');
+
 class RoutesV2 {
   constructor(base, username, password) {
-    this.https = require('https');
-    this.axios = require('axios');
-
     if (!base) throw new Error('Invalid base URL..');
     if (!username) throw new Error('Invalid username..');
     if (!password) throw new Error('Invalid password..');
@@ -19,8 +19,8 @@ class RoutesV2 {
       lolRankedStatsV1StatsByID: '/lol-ranked/v1/current-ranked-stats',
     };
 
-    this.instance = this.axios.create({
-      httpsAgent: new this.https.Agent({
+    this.instance = axios.create({
+      httpsAgent: new https.Agent({
         rejectUnauthorized: false,
       }),
       headers: {

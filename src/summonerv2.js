@@ -5,7 +5,6 @@ class SummonerV2 {
     this.name = this.name || data.displayName;
     this.ID = this.ID || data.summonerId;
     this.iconID = this.iconID || data.profileIconId;
-    this.getRankedStats();
   }
 
   receivedRankedStats = (data) => {
@@ -19,8 +18,10 @@ class SummonerV2 {
     }
   };
 
-  getProfileData = () => {
-    const arr = {
+  getProfileData = async () => {
+    await this.getRankedStats();
+
+    return {
       name: this.name,
       iconID: this.iconID,
       leagueName: this.leagueName,
@@ -28,19 +29,14 @@ class SummonerV2 {
       rankedData: `${this.rankedTier} ${this.rankedDivision}`,
       level: this.level,
     };
-    return arr;
   };
 
   getRankedStats = async () => {
     const rankedUrl = this.RiotAPI.route('lolRankedStatsV1StatsByID');
+    const { data } = await this.RiotAPI.instance.get(rankedUrl);
+    const rankedData = data.queueMap.RANKED_SOLO_5x5;
 
-    await this.RiotAPI.instance
-      .get(rankedUrl)
-      .then((res) => {
-        const data = res.data.queueMap.RANKED_SOLO_5x5;
-        this.receivedRankedStats(data);
-      })
-      .catch(() => {});
+    this.receivedRankedStats(rankedData);
   };
 
   returnRomanDivision = (division) => {
@@ -53,4 +49,5 @@ class SummonerV2 {
     return '';
   };
 }
+
 module.exports = SummonerV2;
