@@ -8,8 +8,8 @@ const fs = require('fs');
 const fse = require('fs-extra');
 const axios = require('axios');
 const ini = require('ini');
-const RoutesV2 = require('./src/routesv2');
-const SummonerV2 = require('./src/summonerv2');
+const RoutesV2 = require('./routesv2');
+const SummonerV2 = require('./summonerv2');
 
 const connector = new LCUConnector();
 const credentialsPath = './credentials.ini';
@@ -57,13 +57,16 @@ app.on('window-all-closed', () => {
 
 const getGameDir = () => selectedDir ?? null;
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms) =>
+  new Promise((resolve) => {
+    resolve(setTimeout(resolve, ms));
+  });
 
-const getLocalSummoner = async () => {
+async function getLocalSummoner() {
   const { data } = await RiotAPI.instance.get(RiotAPI.route('lolSummonerV1CurrentSummoner'));
   const localSummoner = new SummonerV2(data, RiotAPI);
   return localSummoner;
-};
+}
 
 const formattedData = (data) => {
   const baseUrl = `${data.protocol}://${data.address}:${data.port}`;
@@ -147,9 +150,9 @@ ipcMain.on('startBot', () => {
   if (!getGameDir() || !fs.existsSync(botConfigPath) || !fs.existsSync(credentialsPath)) {
     return dialog.showMessageBoxSync(mainWindow, {
       message: `Required files/paths not found:
-      lolPath: ${getGameDir() ? 'Found' : 'Not Found'}
-      botConfigPath: ${fs.existsSync(botConfigPath) ? 'Found' : 'Not Found'}
-      credentialsPath: ${fs.existsSync(credentialsPath) ? 'Found' : 'Not Found'}`,
+      - lolPath: ${getGameDir() ? 'Found' : 'Not Found'}
+      - botConfigPath: ${fs.existsSync(botConfigPath) ? 'Found' : 'Not Found'}
+      - credentialsPath: ${fs.existsSync(credentialsPath) ? 'Found' : 'Not Found'}`,
       type: 'error',
     });
   }
