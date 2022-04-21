@@ -6,3 +6,4 @@ src/routes.js
 src/summoner.js
 app/index_teste.html
 core/ConfigV2
+yarn.lock
