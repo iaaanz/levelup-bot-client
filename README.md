@@ -11,7 +11,7 @@ Client developed in order to manage the operation of the [LevelUpBot](https://gi
 
 ## License
 
-This project is licensed under the Apache-2.0 License - See the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the GNU General Public License v3.0 - See the [LICENSE.md](LICENSE) file for details.
 
 ## Project setup
 ```
