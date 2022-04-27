@@ -13,15 +13,16 @@
   },
   "main": "background.js",
   "dependencies": {
+    "@electron/remote": "^2.0.8",
     "axios": "*",
-    "fs-extra": "^10.0.0",
-    "ini": "^3.0.0",
-    "jQuery": "*",
-    "lcu-connector": "*",
     "bootstrap": "^5.1.3",
     "bootstrap-icons": "^1.8.1",
     "bootstrap-vue": "^2.22.0",
     "core-js": "^3.8.3",
+    "fs-extra": "^10.0.0",
+    "ini": "^3.0.0",
+    "jQuery": "*",
+    "lcu-connector": "*",
     "vue": "2.6.14",
     "vue-material-design-icons": "^5.0.0"
   },
@@ -54,7 +55,8 @@
     "rules": {
       "vuejs-accessibility/alt-text": "off",
       "vue/multi-word-component-names": "off",
-      "vue/no-unused-components": "warn"
+      "vue/no-unused-components": "warn",
+      "no-unused-vars": "warn"
     }
   },
   "browserslist": [

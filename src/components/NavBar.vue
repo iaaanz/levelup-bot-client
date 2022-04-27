@@ -12,7 +12,7 @@
         <b-row>
           <b-tabs v-model="tabIndex">
             <b-tab title="Home" :title-link-class="linkClass()">
-              <Home />
+              <Home @getStarted="getStarted" />
             </b-tab>
             <b-tab title="Profile" :title-link-class="linkClass()">
               <Profile />
@@ -24,13 +24,13 @@
         </b-row>
       </div>
       <div class="controls">
-        <button>
+        <button @click="minimizeApp()">
           <b-icon-dash class="h3" />
         </button>
         <button>
           <b-icon-bug-fill class="h6 mt-1" />
         </button>
-        <button>
+        <button @click="closeApp()">
           <b-icon-x class="h4" />
         </button>
       </div>
@@ -42,6 +42,8 @@
 import Profile from './tabs/Profile.vue';
 import Home from './tabs/Home.vue';
 import Configurations from './tabs/Configurations.vue';
+import { ipcRenderer } from 'electron';
+import { getCurrentWindow } from '@electron/remote';
 
 export default {
   name: 'NavBar',
@@ -56,6 +58,15 @@ export default {
     };
   },
   methods: {
+    getStarted() {
+      this.tabIndex = 2;
+    },
+    closeApp() {
+      ipcRenderer.send('closeApp');
+    },
+    minimizeApp() {
+      getCurrentWindow().minimize();
+    },
     linkClass() {
       if (this.tabIndex === 0) {
         document.getElementById('selected').style.marginLeft = '0px';
@@ -73,14 +84,13 @@ export default {
 <style>
 .drag {
   position: absolute;
-  width: 100%;
-  height: 15px;
+  width: 90%;
+  height: 25px;
   top: 0;
   -webkit-app-region: drag;
 }
 
 .tab-container {
-  z-index: -1;
   width: 100%;
   border-top: 2px solid #735828;
   border-bottom: 1px solid rgba(255, 255, 255, 0.4);

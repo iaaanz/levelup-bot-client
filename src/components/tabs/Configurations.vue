@@ -6,23 +6,50 @@
           <p class="suboption-name">Champions - Pick order in lobby</p>
           <b-col sm="8">
             <b-row>
-              <select id="champ1" class="dropdown mb-2"></select>
-              <select id="champ2" class="dropdown mb-2"></select>
-              <select id="champ3" class="dropdown mb-2"></select>
+              <select id="champ1" class="dropdown mb-2" v-model="firstChampion">
+                <option
+                  v-for="(name, index) in champions"
+                  :value="index"
+                  :key="index"
+                >
+                  {{ name }}
+                </option>
+              </select>
+              <select
+                id="champ2"
+                class="dropdown mb-2"
+                v-model="secondChampion"
+              >
+                <option
+                  v-for="(name, index) in champions"
+                  :value="index"
+                  :key="index"
+                >
+                  {{ name }}
+                </option>
+              </select>
+              <select id="champ3" class="dropdown mb-2" v-model="thirdChampion">
+                <option
+                  v-for="(name, index) in champions"
+                  :value="index"
+                  :key="index"
+                >
+                  {{ name }}
+                </option>
+              </select>
             </b-row>
           </b-col>
           <p class="mt-3 suboption-name">Gamemode</p>
           <b-col sm="8">
             <b-row>
-              <select id="gamemode" class="dropdown mb-2">
-                <option value="">Treino (dev)</option>
-                <option value="">Introducao (recomendado)</option>
+              <select id="gamemode" class="dropdown mb-2" v-model="gamemode">
+                <option value="0">Treino (dev)</option>
+                <option value="1">Introducao (recomendado)</option>
               </select>
             </b-row>
           </b-col>
         </b-row>
       </b-col>
-
       <b-col sm="6" class="text-center">
         <b-row align-h="center" class="mt-4">
           <p class="suboption-name">Automatic login (in progress...)</p>
@@ -45,7 +72,7 @@
           </b-col>
           <b-col sm="8" class="mt-4">
             <b-row>
-              <button type="button" onClick="selectDir()">
+              <button type="button" @click="selectDirectory()">
                 Game Directory
               </button>
               <textarea
@@ -54,31 +81,19 @@
                 class="mt-2"
                 id="gamefolder"
                 cols="35"
+                v-model="selectedDir"
               >
-              Ex: C:\Riot Games\League of Legends
               </textarea>
             </b-row>
           </b-col>
         </b-row>
-        <!-- <div class="row mt-2 justify-content-center">
-          <div class="col-4 ps-0 pe-1">
-            <button type="button" class="w-100" onClick="saveConfiguration()">
-              Save
-            </button>
-          </div>
-          <div class="col-4 pe-0 ps-1">
-            <button type="button" class="w-100" onClick="startBot()">
-              Start
-            </button>
-          </div>
-        </div> -->
       </b-col>
       <b-col sm="2" class="text-center">
         <b-row align-h="center" class="mt-5">
           <button
             type="button"
             class="text-uppercase"
-            onClick="saveConfiguration()"
+            @click="saveConfiguration()"
           >
             Save
           </button>
@@ -89,8 +104,57 @@
 </template>
 
 <script>
+import { getCurrentWindow, dialog } from '@electron/remote';
+import { ipcRenderer } from 'electron';
+
 export default {
   name: 'Configurations',
+  data() {
+    return {
+      firstChampion: 51,
+      secondChampion: 22,
+      thirdChampion: 96,
+      selectedDir: 'C:\\Riot Games\\League of Legends',
+      gamemode: 1,
+      champions: {},
+      currentWindow: null,
+    };
+  },
+  mounted() {
+    this.currentWindow = getCurrentWindow();
+    const championsJson = require('./champions.json');
+    this.champions = Object.values(championsJson)[0];
+  },
+  methods: {
+    saveConfiguration() {
+      if (!this.selectedDir) {
+        return dialog.showMessageBoxSync(this.currentWindow, {
+          message: 'Select the League of Legends path',
+          type: 'warning',
+        });
+      }
+
+      const botConfiguration = {
+        gamemode: this.gamemode,
+        champion1: this.firstChampion,
+        champion2: this.secondChampion,
+        champion3: this.thirdChampion,
+        lolPath: this.selectedDir,
+      };
+
+      ipcRenderer.send('writeConfigurationFile', botConfiguration);
+    },
+    selectDirectory() {
+      const dir = dialog.showOpenDialogSync(this.currentWindow, {
+        title:
+          'Select the League of Legends folder (E.g.: C:\\Riot Games\\League of Legends)',
+        properties: ['openDirectory'],
+        defaultPath: 'C:\\Riot Games',
+      });
+      const selectedDir = dir ? dir[0] : null;
+      this.selectedDir = selectedDir;
+    },
+  },
 };
 </script>
 

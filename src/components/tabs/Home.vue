@@ -3,7 +3,9 @@
     <div class="title">
       <img src="../../assets/ui/underline.png" draggable="false" />
     </div>
-    <button type="button" class="text-uppercase">Get Started</button>
+    <button type="button" class="text-uppercase" @click="$emit('getStarted')">
+      Get Started
+    </button>
   </div>
 </template>
 
