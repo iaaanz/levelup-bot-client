@@ -1,4 +1,4 @@
-# levelup-bot-client-v1
+# levelup-bot-client
 
 Client developed in order to manage the operation of the [LevelUpBot](https://github.com/iaaanz/levelup-bot-core-v1) (currently private).
 
